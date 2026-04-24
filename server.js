@@ -70,25 +70,28 @@ async function scrapeResultados(slug, dataParam) {
     return cache[cacheKey].data;
   }
 
-  let urlSite = '';
-  let horarios = [];
+  // Mapa completo de todas as loterias disponíveis no Resultado Fácil
+  const MAPA_LOTERIAS = {
+    'look-goias':        { url: 'resultado-do-jogo-do-bicho/look-loterias',   urlHist: 'resultados-look-loterias-do-dia',        horarios: ['07:00','09:00','11:00','14:00','16:00','18:00','21:00','23:00'] },
+    'loteria-nacional':  { url: 'resultado-do-jogo-do-bicho/loteria-nacional', urlHist: 'resultados-loteria-nacional-do-dia',    horarios: ['02:00','08:00','10:00','12:00','15:00','17:00','19:00','22:00'] },
+    'lotep':             { url: 'resultado-do-jogo-do-bicho/lotep',            urlHist: 'resultados-lotep-do-dia',               horarios: ['10:45','12:45','15:45','18:00'] },
+    'pt-rio':            { url: 'resultados-pt-rio-de-hoje-1ao10',             urlHist: 'resultados-pt-rio-do-dia',              horarios: ['09:20','11:20','14:20','16:20','18:20','21:20'] },
+    'minas-mg':          { url: 'resultado-do-jogo-do-bicho/minas-gerais',     urlHist: 'resultados-minas-gerais-do-dia',        horarios: ['12:00','15:00','19:00','21:00'] },
+    'loteria-do-parana': { url: 'resultado-do-jogo-do-bicho/parana',           urlHist: 'resultados-parana-do-dia',              horarios: ['10:00','11:00','14:00','16:00','18:00','21:00'] },
+    'federal':           { url: 'ultimos-resultados-da-federal-1ao10',         urlHist: 'resultados-federal-do-dia',             horarios: ['19:00'] },
+  };
 
-  if (slug === 'look-goias' || slug === 'look-loterias') {
-    // URL real do histórico descoberta pelo browser:
-    // Hoje:      /resultado-do-jogo-do-bicho/look-loterias
-    // Histórico: /resultados-look-loterias-do-dia-YYYY-MM-DD
-    urlSite = ehHoje
-      ? 'https://www.resultadofacil.com.br/resultado-do-jogo-do-bicho/look-loterias'
-      : `https://www.resultadofacil.com.br/resultados-look-loterias-do-dia-${dataAlvo}`;
-    horarios = ['07:00', '09:00', '11:00', '14:00', '16:00', '18:00', '21:00', '23:00'];
-  } else if (slug === 'loteria-nacional') {
-    urlSite = ehHoje
-      ? 'https://www.resultadofacil.com.br/resultado-do-jogo-do-bicho/loteria-nacional'
-      : `https://www.resultadofacil.com.br/resultados-loteria-nacional-do-dia-${dataAlvo}`;
-    horarios = ['02:00', '08:00', '10:00', '12:00', '15:00', '17:00', '19:00', '22:00'];
-  } else {
+  const lotConfig = MAPA_LOTERIAS[slug];
+  if (!lotConfig) {
     throw new Error('Slug desconhecido: ' + slug);
   }
+
+  const BASE = 'https://www.resultadofacil.com.br/';
+  const urlSite  = ehHoje
+    ? BASE + lotConfig.url
+    : BASE + lotConfig.urlHist + '-' + dataAlvo;
+  const horarios = lotConfig.horarios;
+
 
   const puppeteer = require('puppeteer-core');
   const launchOptions = await getLaunchOptions();
