@@ -79,7 +79,9 @@ async function scrapeResultados(slug, dataParam) {
     'minas-mg':          { prefix: 'resultados-minas-gerais-do-dia',         horarios: ['12:00','15:00','19:00','21:00'] },
     'loteria-do-parana': { prefix: 'resultados-parana-do-dia',               horarios: ['10:00','11:00','14:00','16:00','18:00','21:00'] },
     'federal':           { prefix: 'resultados-federal-do-dia',              horarios: ['19:00'] },
+    'loteria-dos-sonhos':{ prefix: 'resultado-do-jogo-do-bicho/ce/do-dia',   horarios: ['11:00','14:00','15:45','19:00'] },
   };
+
 
   const lotConfig = MAPA_LOTERIAS[slug];
   if (!lotConfig) {
