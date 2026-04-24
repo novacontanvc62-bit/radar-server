@@ -74,17 +74,17 @@ async function scrapeResultados(slug, dataParam) {
   let horarios = [];
 
   if (slug === 'look-goias' || slug === 'look-loterias') {
-    // O Resultado Fácil usa URLs diferentes para datas passadas:
-    // Hoje: /resultado-do-jogo-do-bicho/look-loterias
-    // Histórico: /resultado-do-jogo-do-bicho/look-loterias/YYYY-MM-DD
+    // URL real do histórico descoberta pelo browser:
+    // Hoje:      /resultado-do-jogo-do-bicho/look-loterias
+    // Histórico: /resultados-look-loterias-do-dia-YYYY-MM-DD
     urlSite = ehHoje
       ? 'https://www.resultadofacil.com.br/resultado-do-jogo-do-bicho/look-loterias'
-      : `https://www.resultadofacil.com.br/resultado-do-jogo-do-bicho/look-loterias/${dataAlvo}`;
+      : `https://www.resultadofacil.com.br/resultados-look-loterias-do-dia-${dataAlvo}`;
     horarios = ['07:00', '09:00', '11:00', '14:00', '16:00', '18:00', '21:00', '23:00'];
   } else if (slug === 'loteria-nacional') {
     urlSite = ehHoje
       ? 'https://www.resultadofacil.com.br/resultado-do-jogo-do-bicho/loteria-nacional'
-      : `https://www.resultadofacil.com.br/resultado-do-jogo-do-bicho/loteria-nacional/${dataAlvo}`;
+      : `https://www.resultadofacil.com.br/resultados-loteria-nacional-do-dia-${dataAlvo}`;
     horarios = ['02:00', '08:00', '10:00', '12:00', '15:00', '17:00', '19:00', '22:00'];
   } else {
     throw new Error('Slug desconhecido: ' + slug);
@@ -139,7 +139,7 @@ async function scrapeResultados(slug, dataParam) {
         const hora = parseInt(matchHora[1] || matchHora[2]);
         const horaFormatada = hora.toString().padStart(2, '0') + ':00';
         const tempoSorteio = hora * 60;
-        if (tempoSorteio > tempoAtual) continue; // Sorteio ainda não ocorreu
+        if (tempoSorteio > tempoLimite) continue; // Sorteio ainda não ocorreu
 
         // Pega a tabela/bloco mais próximo após este título
         let proximo = el.nextElementSibling;
