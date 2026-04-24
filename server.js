@@ -70,28 +70,26 @@ async function scrapeResultados(slug, dataParam) {
     return cache[cacheKey].data;
   }
 
-  // Mapa completo de todas as loterias disponíveis no Resultado Fácil
+  // Mapa de prefixos estáveis (padrão de histórico que funciona em tempo real)
   const MAPA_LOTERIAS = {
-    'look-goias':        { url: 'resultados-look-loterias-de-hoje',      urlHist: 'resultados-look-loterias-do-dia',        horarios: ['07:00','09:00','11:00','14:00','16:00','18:00','21:00','23:00'] },
-    'loteria-nacional':  { url: 'resultados-da-banca-loteria-nacional',  urlHist: 'resultados-loteria-nacional-do-dia',    horarios: ['02:00','08:00','10:00','12:00','15:00','17:00','19:00','22:00'] },
-    'lotep':             { url: 'resultados-lotep-de-hoje',              urlHist: 'resultados-lotep-do-dia',               horarios: ['10:45','12:45','15:45','18:00'] },
-    'pt-rio':            { url: 'resultados-pt-rio-de-hoje',             urlHist: 'resultados-pt-rio-do-dia',              horarios: ['09:20','11:20','14:20','16:20','18:20','21:20'] },
-    'minas-mg':          { url: 'resultado-do-jogo-do-bicho/mg',         urlHist: 'resultados-minas-gerais-do-dia',        horarios: ['12:00','15:00','19:00','21:00'] },
-    'loteria-do-parana': { url: 'resultado-do-jogo-do-bicho/pr',         urlHist: 'resultados-parana-do-dia',              horarios: ['10:00','11:00','14:00','16:00','18:00','21:00'] },
-    'federal':           { url: 'ultimos-resultados-da-federal-1ao10',   urlHist: 'resultados-federal-do-dia',             horarios: ['19:00'] },
+    'look-goias':        { prefix: 'resultados-look-loterias-do-dia',        horarios: ['07:00','09:00','11:00','14:00','16:00','18:00','21:00','23:00'] },
+    'loteria-nacional':  { prefix: 'resultados-loteria-nacional-do-dia',     horarios: ['02:00','08:00','10:00','12:00','15:00','17:00','19:00','22:00'] },
+    'lotep':             { prefix: 'resultados-lotep-do-dia',                horarios: ['10:45','12:45','15:45','18:00'] },
+    'pt-rio':            { prefix: 'resultados-pt-rio-do-dia',               horarios: ['09:20','11:20','14:20','16:20','18:20','21:20'] },
+    'minas-mg':          { prefix: 'resultados-minas-gerais-do-dia',         horarios: ['12:00','15:00','19:00','21:00'] },
+    'loteria-do-parana': { prefix: 'resultados-parana-do-dia',               horarios: ['10:00','11:00','14:00','16:00','18:00','21:00'] },
+    'federal':           { prefix: 'resultados-federal-do-dia',              horarios: ['19:00'] },
   };
-
 
   const lotConfig = MAPA_LOTERIAS[slug];
   if (!lotConfig) {
     throw new Error('Slug desconhecido: ' + slug);
   }
 
-  const BASE = 'https://www.resultadofacil.com.br/';
-  const urlSite  = ehHoje
-    ? BASE + lotConfig.url
-    : BASE + lotConfig.urlHist + '-' + dataAlvo;
+  // A URL estável que funciona tanto para hoje quanto para datas passadas:
+  const urlSite = `https://www.resultadofacil.com.br/${lotConfig.prefix}-${dataAlvo}`;
   const horarios = lotConfig.horarios;
+
 
 
   const puppeteer = require('puppeteer-core');
