@@ -28,6 +28,15 @@ function getHoraBrasilia() {
   return brasilia.getUTCHours() * 60 + brasilia.getUTCMinutes();
 }
 
+function getDataBrasilia() {
+  const agora = new Date();
+  const brasilia = new Date(agora.getTime() - (3 * 60 * 60 * 1000));
+  const y = brasilia.getUTCFullYear();
+  const m = String(brasilia.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(brasilia.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 async function getLaunchOptions() {
   // Em produção (Railway/Render) usa o Chromium do pacote @sparticuz/chromium
   // Em desenvolvimento local usa o Chrome instalado
@@ -49,11 +58,15 @@ async function getLaunchOptions() {
   }
 }
 
-async function scrapeResultados(slug) {
-  // Verifica cache
-  const cacheKey = slug;
-  if (cache[cacheKey] && (Date.now() - cache[cacheKey].timestamp < CACHE_TTL_MS)) {
-    console.log(`[CACHE HIT] ${slug}`);
+async function scrapeResultados(slug, dataParam) {
+  // Se vier uma data específica, usamos ela; se não, usamos hoje (Brasília)
+  const dataAlvo = dataParam || getDataBrasilia();
+  const ehHoje = dataAlvo === getDataBrasilia();
+
+  // Verifica cache (apenas para o dia de hoje)
+  const cacheKey = `${slug}-${dataAlvo}`;
+  if (ehHoje && cache[cacheKey] && (Date.now() - cache[cacheKey].timestamp < CACHE_TTL_MS)) {
+    console.log(`[CACHE HIT] ${slug} ${dataAlvo}`);
     return cache[cacheKey].data;
   }
 
@@ -61,10 +74,17 @@ async function scrapeResultados(slug) {
   let horarios = [];
 
   if (slug === 'look-goias' || slug === 'look-loterias') {
-    urlSite = 'https://www.resultadofacil.com.br/resultado-do-jogo-do-bicho/look-loterias';
+    // O Resultado Fácil usa URLs diferentes para datas passadas:
+    // Hoje: /resultado-do-jogo-do-bicho/look-loterias
+    // Histórico: /resultado-do-jogo-do-bicho/look-loterias/YYYY-MM-DD
+    urlSite = ehHoje
+      ? 'https://www.resultadofacil.com.br/resultado-do-jogo-do-bicho/look-loterias'
+      : `https://www.resultadofacil.com.br/resultado-do-jogo-do-bicho/look-loterias/${dataAlvo}`;
     horarios = ['07:00', '09:00', '11:00', '14:00', '16:00', '18:00', '21:00', '23:00'];
   } else if (slug === 'loteria-nacional') {
-    urlSite = 'https://www.resultadofacil.com.br/resultado-do-jogo-do-bicho/loteria-nacional';
+    urlSite = ehHoje
+      ? 'https://www.resultadofacil.com.br/resultado-do-jogo-do-bicho/loteria-nacional'
+      : `https://www.resultadofacil.com.br/resultado-do-jogo-do-bicho/loteria-nacional/${dataAlvo}`;
     horarios = ['02:00', '08:00', '10:00', '12:00', '15:00', '17:00', '19:00', '22:00'];
   } else {
     throw new Error('Slug desconhecido: ' + slug);
@@ -100,7 +120,10 @@ async function scrapeResultados(slug) {
     }
 
     // Extrai os dados da página
-    const draws = await page.evaluate((horarios, tempoAtual) => {
+    // Para dias passados, todos os horários são válidos (o sorteio já ocorreu)
+    const tempoLimite = ehHoje ? getHoraBrasilia() : 24 * 60;
+
+    const draws = await page.evaluate((horarios, tempoLimite) => {
       const resultado = [];
 
       // Procura todos os blocos de resultado (organizados por horário)
@@ -177,11 +200,12 @@ async function scrapeResultados(slug) {
       }
 
       return resultado;
-    }, horarios, getHoraBrasilia());
+    }, horarios, tempoLimite);
 
     // Formata para o padrão do PWA
     const drawsFormatados = draws.map(d => ({
       horario: d.horario,
+      data: dataAlvo,
       resultados: d.premios.map((p, idx) => {
         const info = calcularBicho(p.milhar);
         return {
@@ -193,10 +217,12 @@ async function scrapeResultados(slug) {
       })
     }));
 
-    const resposta = { loteria: slug.toUpperCase(), draws: drawsFormatados };
+    const resposta = { loteria: slug.toUpperCase(), data: dataAlvo, draws: drawsFormatados };
 
-    // Salva no cache
-    cache[cacheKey] = { data: resposta, timestamp: Date.now() };
+    // Salva no cache (apenas hoje)
+    if (ehHoje) {
+      cache[cacheKey] = { data: resposta, timestamp: Date.now() };
+    }
 
     console.log(`[SCRAPER] Sucesso! ${drawsFormatados.length} sorteios encontrados para ${slug}`);
     return resposta;
@@ -218,10 +244,12 @@ app.get('/health', (req, res) => {
 // Rota principal de resultados
 app.get('/', async (req, res) => {
   const slug = req.query.slug || 'look-goias';
+  // Suporte a data: ?data=2026-04-22 (formato YYYY-MM-DD)
+  const data = req.query.data || null;
 
   try {
-    console.log(`[REQUEST] slug=${slug}`);
-    const dados = await scrapeResultados(slug);
+    console.log(`[REQUEST] slug=${slug} data=${data || 'hoje'}`);
+    const dados = await scrapeResultados(slug, data);
     res.json(dados);
   } catch (err) {
     console.error('[ERRO]', err.message);
