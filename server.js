@@ -134,13 +134,15 @@ async function scrapeResultados(slug, dataParam) {
 
       for (const el of todosElementos) {
         const texto = el.textContent || '';
-        // Procura padrão de hora: "07h", "07:00", "07h00"
-        const matchHora = texto.match(/\b(\d{1,2})h(?:00)?\b|\b(\d{1,2}):00\b/);
+        // Captura padrões como: "07:00", "10:45", "09h20", "11h", "18h00"
+        const matchHora = texto.match(/\b(\d{1,2})(?:h|:)(\d{2})?\b/);
         if (!matchHora) continue;
 
-        const hora = parseInt(matchHora[1] || matchHora[2]);
-        const horaFormatada = hora.toString().padStart(2, '0') + ':00';
-        const tempoSorteio = hora * 60;
+        const hora = parseInt(matchHora[1]);
+        const minutos = matchHora[2] ? parseInt(matchHora[2]) : 0;
+        const horaFormatada = hora.toString().padStart(2, '0') + ':' + minutos.toString().padStart(2, '0');
+        
+        const tempoSorteio = (hora * 60) + minutos;
         if (tempoSorteio > tempoLimite) continue; // Sorteio ainda não ocorreu
 
         // Pega a tabela/bloco mais próximo após este título
