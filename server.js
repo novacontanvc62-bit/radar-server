@@ -79,7 +79,11 @@ async function scrapeResultados(slug, dataParam) {
     'minas-mg':          { prefix: 'resultados-minas-gerais-do-dia',         horarios: ['12:00','15:00','19:00','21:00'] },
     'loteria-do-parana': { prefix: 'resultados-parana-do-dia',               horarios: ['10:00','11:00','14:00','16:00','18:00','21:00'] },
     'federal':           { prefix: 'resultados-federal-do-dia',              horarios: ['19:00'] },
-    'loteria-dos-sonhos':{ prefix: 'resultado-do-jogo-do-bicho/ce/do-dia',   horarios: ['11:00','14:00','15:45','19:00'] },
+    'loteria-dos-sonhos':{ prefix: 'resultados-lotece---loteria-dos-sonhos-do-dia',  horarios: ['11:00','14:00','15:45','19:00'] },
+    'lotece---loteria-dos-sonhos': { prefix: 'resultados-lotece---loteria-dos-sonhos-do-dia', horarios: ['11:00','14:00','15:45','19:00'] },
+    'teste-radar':       { prefix: 'resultados-federal-do-dia',              horarios: ['19:00'] },
+
+
   };
 
 
@@ -109,7 +113,8 @@ async function scrapeResultados(slug, dataParam) {
     });
 
     console.log(`[SCRAPER] Acessando: ${urlSite}`);
-    await page.goto(urlSite, { waitUntil: 'networkidle2', timeout: 30000 });
+    await page.goto(urlSite, { waitUntil: 'domcontentloaded', timeout: 30000 });
+
 
     // Tenta clicar no botão "1º ao 10º" se existir
     try {
@@ -137,7 +142,7 @@ async function scrapeResultados(slug, dataParam) {
       for (const el of todosElementos) {
         const texto = el.textContent || '';
         // Captura padrões como: "07:00", "10:45", "09h20", "11h", "18h00"
-        const matchHora = texto.match(/\b(\d{1,2})(?:h|:)(\d{2})?\b/);
+        const matchHora = texto.match(/(\d{1,2})(?:h|:)(\d{2})?/i);
         if (!matchHora) continue;
 
         const hora = parseInt(matchHora[1]);
