@@ -4,13 +4,16 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 ENV NODE_ENV=production
 
+USER root
 WORKDIR /app
 
 COPY package*.json ./
 RUN npm install --production
 
 COPY . .
+RUN chown -R pptruser:pptruser /app
 
+USER pptruser
 EXPOSE 3000
 
 CMD ["node", "server.js"]
