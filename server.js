@@ -1,8 +1,8 @@
 const express = require('express');
+const cors = require('cors');
 const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Cache simples em memória (evita bater no site a cada requisição)
+app.use(cors());
+const PORT = process.env.PORT || 3000;// Cache simples em memória (evita bater no site a cada requisição)
 const cache = {};
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
 
@@ -53,7 +53,7 @@ async function getLaunchOptions() {
     return {
       headless: 'new',
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-      executablePath: process.env.CHROME_PATH || undefined,
+      executablePath: process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
     };
   }
 }
